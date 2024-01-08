@@ -6,6 +6,7 @@
 #include "Blinky.h"
 #include "Pinky.h"
 #include "Inky.h"
+#include "Clyde.h"
 #include <QMainWindow>
 #include <QKeyEvent>
 #include <QPixmap>
@@ -17,6 +18,8 @@
 #include <QPropertyAnimation>
 #include <QLabel>
 #include <QPoint>
+#include <QVector>
+
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -33,6 +36,9 @@ protected:
 
 
 private:
+	int scoreMulitiplier;
+	QVector<Ghost*> ghosts;
+	void death();
 	void ghostMove();
 	QLabel* highScoreLabel;
 	QLabel* scoreLabel;
@@ -50,12 +56,15 @@ private:
     Blinky *blinky;
     Pinky *pinky;
     Inky *inky;
+    Clyde* clyde;
     QPixmap backgroundImage;
     int lastKeyPressed;
     int score;
     int highScore;
+    void powerUP();
     void updateScore();
     void updateHighScore();
+    void moveLabels();
 };
 
 #endif // MAINWINDOW_H

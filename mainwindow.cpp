@@ -45,15 +45,21 @@ MainWindow::MainWindow(QWidget *parent)
 	inky = new Inky(centralWidget);
 	inky->x = 3;
 	inky->y = 1;
+	clyde = new Clyde(centralWidget);
+	clyde->x = 4;
+	clyde->y = 1;
     centralLayout->addWidget(pacman->getLabel());
     centralLayout->addWidget(blinky->getLabel());
     centralLayout->addWidget(pinky->getLabel());
     centralLayout->addWidget(inky->getLabel());
-    
-    
+    centralLayout->addWidget(clyde->getLabel());
+    ghosts.push_back(blinky);
+	ghosts.push_back(pinky);
+	ghosts.push_back(inky);
+	ghosts.push_back(clyde);
+	
     mainLayout->addLayout(scoreLayout);
-    mainLayout->addLayout(centralLayout);
-    
+    mainLayout->addLayout(centralLayout); 
     
     food.load("pacman_sprites/Food_small.png");
 	bigFood.load("pacman_sprites/Food_big.png");
@@ -97,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     continuousMoveTimer = new QTimer(this);
     ghostMoveTimer = new QTimer(this);
-    ghostMoveTimer->start(200);
+    ghostMoveTimer->start(PACE);
     
 	connect(ghostMoveTimer, &QTimer::timeout, this, &MainWindow::ghostMove);
 	connect(continuousMoveTimer, &QTimer::timeout, this, &MainWindow::continuousMove);
@@ -105,17 +111,32 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 void MainWindow::ghostMove(){
-	blinky->findTarget(pacman->x, pacman->y);
-	blinky->move();
 	pinky->PacDirection = pacman->direction;
-	pinky->findTarget(pacman->x, pacman->y);
-	pinky->move();
 	inky->PacDirection = pacman->direction;
 	inky->BlinkyX = blinky->x;
 	inky->BlinkyY = blinky->y;
-	inky->findTarget(pacman->x, pacman->y);
-	inky->move();
 	
+	//qDebug() << blinky->direction << "\nmode: " << blinky->mode << "\n" << blinky->targetX;
+	for(Ghost* ghost : ghosts){
+		if((ghost->x == pacman->x) && (ghost->y == pacman->y)){
+			if(pacman->isPoweredUP){
+				ghost->eaten();
+				score += 20 * scoreMulitiplier;
+				scoreMulitiplier *= 2;
+			}
+			else{
+				death();
+				return;
+			}
+		}
+		ghost->findTarget(pacman->x, pacman->y);
+		ghost->nextMove();
+	}
+}
+
+void MainWindow::death(){
+	ghostMoveTimer->stop();
+	continuousMoveTimer->stop();
 }
 
 
@@ -133,6 +154,24 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 			} 
             break;
     }
+}
+
+void MainWindow::powerUP(){
+	score += 10;
+	pacman->isPoweredUP = true;
+	for(Ghost* g : ghosts){
+		g->getFrightened();
+	}
+	ghostMoveTimer->setInterval(PACE * 1.5);
+	QTimer::singleShot(8000, this, [&](){
+		pacman->isPoweredUP = false;
+		for(Ghost* g : ghosts){
+			g->newChase();
+		}
+	ghostMoveTimer->setInterval(PACE);	
+	}); // 8s ?
+	scoreMulitiplier = 1;
+	updateScore();
 }
 
 
@@ -171,8 +210,7 @@ void MainWindow::continuousMove() {
 			map[newY][newX] = 0;
 		}
 		if(map[newY][newX] == 3){
-			score += 10;
-			updateScore();
+			powerUP();
 			map[newY][newX] = 0;
 		}
 		
@@ -219,8 +257,7 @@ void MainWindow::directionalMove(){
 			map[newY][newX] = 0;
 		}
 		if(map[newY][newX] == 3){
-			score += 10;
-			updateScore();
+			powerUP();
 			map[newY][newX] = 0;
 		}
 	}
@@ -256,23 +293,22 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			
 		}
 	}
-	/*
-	for (int row = 10; row < 12; ++row)
-	{
-		for (int col = 10; col < 12; ++col)
-		{
-			int spriteIndex = (row * 2 + col) % 4;
-			painter.drawPixmap(col * SPRITE_SIZE, row * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, sprites[spriteIndex]);
-		}
-	}*/
 }
 
 void MainWindow::updateScore() {
     scoreLabel->setText("Score: " + QString::number(score));
+	moveLabels();
 }
 
 void MainWindow::updateHighScore() {
     highScoreLabel->setText("High Score: " + QString::number(highScore));
 }
 
+void MainWindow::moveLabels() {
+	pacman->setPosition(pacman->x, pacman->y);
+	for(Ghost* g : ghosts){
+		qDebug() << g->x << g->y;
+		g->setPosition(g->x, g->y);
+	}
+}
 

@@ -5,6 +5,8 @@
 
 Inky::Inky(QObject *parent) : Ghost(parent){
 	loadSprite("pacman_sprites/Inky.png");
+	homeX = 28;
+	homeY = 33;
 }
 
 void Inky::findTarget(int pX, int pY){
@@ -33,5 +35,13 @@ void Inky::findTarget(int pX, int pY){
 	targetY = facingY + vectorY;
 	
 }
+
+
+
+void Inky::newChase(){
+	mode = CHASE;
+	loadSprite("pacman_sprites/Inky.png");
+}
+
 
 

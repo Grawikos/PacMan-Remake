@@ -19,7 +19,7 @@ Player::Player(QObject *parent) : QObject(parent) {
     label->setPixmap(QPixmap("pacman_sprites/PacMan.png").scaled(SPRITE_SIZE, SPRITE_SIZE));
     label->setScaledContents(false);
     label->setContentsMargins(0, 0, 0, 0);
-    poweredUP = false;
+    isPoweredUP = false;
 }
 
 void Player::setPosition(int _x, int _y) {

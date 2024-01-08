@@ -1,20 +1,19 @@
 #include "Ghost.h"
 
-#ifndef PINKY_H
-#define PINKY_H
+#ifndef CLYDE_H
+#define CLYDE_H
 
 #include <QObject>
 #include <QLabel>
 
-class Pinky : virtual public Ghost {
+class Clyde : virtual public Ghost {
     Q_OBJECT
 
 public:
-	char PacDirection;
-	Pinky(QObject *parent = nullptr);
+	Clyde(QObject *parent = nullptr);
 	void findTarget(int pX, int pY) override;    
 	void newChase() override;
 };
 
-#endif // PINKY_H
+#endif // Clyde_H
 

@@ -53,18 +53,21 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = Blinky.cpp \
+		Clyde.cpp \
 		Ghost.cpp \
 		Inky.cpp \
 		mainwindow.cpp \
 		Pinky.cpp \
 		Player.cpp \
 		TestPacMan.cpp moc_Blinky.cpp \
+		moc_Clyde.cpp \
 		moc_Ghost.cpp \
 		moc_Inky.cpp \
 		moc_mainwindow.cpp \
 		moc_Pinky.cpp \
 		moc_Player.cpp
 OBJECTS       = Blinky.o \
+		Clyde.o \
 		Ghost.o \
 		Inky.o \
 		mainwindow.o \
@@ -72,6 +75,7 @@ OBJECTS       = Blinky.o \
 		Player.o \
 		TestPacMan.o \
 		moc_Blinky.o \
+		moc_Clyde.o \
 		moc_Ghost.o \
 		moc_Inky.o \
 		moc_mainwindow.o \
@@ -155,11 +159,13 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
 		testqt2.pro Blinky.h \
+		Clyde.h \
 		Ghost.h \
 		Inky.h \
 		mainwindow.h \
 		Pinky.h \
 		Player.h Blinky.cpp \
+		Clyde.cpp \
 		Ghost.cpp \
 		Inky.cpp \
 		mainwindow.cpp \
@@ -349,8 +355,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents Blinky.h Ghost.h Inky.h mainwindow.h Pinky.h Player.h $(DISTDIR)/
-	$(COPY_FILE) --parents Blinky.cpp Ghost.cpp Inky.cpp mainwindow.cpp Pinky.cpp Player.cpp TestPacMan.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents Blinky.h Clyde.h Ghost.h Inky.h mainwindow.h Pinky.h Player.h $(DISTDIR)/
+	$(COPY_FILE) --parents Blinky.cpp Clyde.cpp Ghost.cpp Inky.cpp mainwindow.cpp Pinky.cpp Player.cpp TestPacMan.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -382,14 +388,20 @@ compiler_moc_predefs_clean:
 moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 	g++ -pipe -O2 -Wall -Wextra -dM -E -o moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_Blinky.cpp moc_Ghost.cpp moc_Inky.cpp moc_mainwindow.cpp moc_Pinky.cpp moc_Player.cpp
+compiler_moc_header_make_all: moc_Blinky.cpp moc_Clyde.cpp moc_Ghost.cpp moc_Inky.cpp moc_mainwindow.cpp moc_Pinky.cpp moc_Player.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_Blinky.cpp moc_Ghost.cpp moc_Inky.cpp moc_mainwindow.cpp moc_Pinky.cpp moc_Player.cpp
+	-$(DEL_FILE) moc_Blinky.cpp moc_Clyde.cpp moc_Ghost.cpp moc_Inky.cpp moc_mainwindow.cpp moc_Pinky.cpp moc_Player.cpp
 moc_Blinky.cpp: Blinky.h \
 		Ghost.h \
 		moc_predefs.h \
 		/usr/lib/qt5/bin/moc
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/marcin/Desktop/OOPC/testqt2/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/marcin/Desktop/OOPC/testqt2 -I/home/marcin/Desktop/OOPC/testqt2 -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include Blinky.h -o moc_Blinky.cpp
+
+moc_Clyde.cpp: Clyde.h \
+		Ghost.h \
+		moc_predefs.h \
+		/usr/lib/qt5/bin/moc
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/marcin/Desktop/OOPC/testqt2/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/marcin/Desktop/OOPC/testqt2 -I/home/marcin/Desktop/OOPC/testqt2 -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include Clyde.h -o moc_Clyde.cpp
 
 moc_Ghost.cpp: Ghost.h \
 		moc_predefs.h \
@@ -408,6 +420,7 @@ moc_mainwindow.cpp: mainwindow.h \
 		Ghost.h \
 		Pinky.h \
 		Inky.h \
+		Clyde.h \
 		moc_predefs.h \
 		/usr/lib/qt5/bin/moc
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/marcin/Desktop/OOPC/testqt2/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/marcin/Desktop/OOPC/testqt2 -I/home/marcin/Desktop/OOPC/testqt2 -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include mainwindow.h -o moc_mainwindow.cpp
@@ -443,6 +456,10 @@ Blinky.o: Blinky.cpp Blinky.h \
 		Ghost.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Blinky.o Blinky.cpp
 
+Clyde.o: Clyde.cpp Clyde.h \
+		Ghost.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Clyde.o Clyde.cpp
+
 Ghost.o: Ghost.cpp Ghost.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Ghost.o Ghost.cpp
 
@@ -455,7 +472,8 @@ mainwindow.o: mainwindow.cpp mainwindow.h \
 		Blinky.h \
 		Ghost.h \
 		Pinky.h \
-		Inky.h
+		Inky.h \
+		Clyde.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o mainwindow.cpp
 
 Pinky.o: Pinky.cpp Pinky.h \
@@ -470,11 +488,15 @@ TestPacMan.o: TestPacMan.cpp mainwindow.h \
 		Blinky.h \
 		Ghost.h \
 		Pinky.h \
-		Inky.h
+		Inky.h \
+		Clyde.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o TestPacMan.o TestPacMan.cpp
 
 moc_Blinky.o: moc_Blinky.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_Blinky.o moc_Blinky.cpp
+
+moc_Clyde.o: moc_Clyde.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_Clyde.o moc_Clyde.cpp
 
 moc_Ghost.o: moc_Ghost.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_Ghost.o moc_Ghost.cpp

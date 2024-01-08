@@ -13,7 +13,8 @@ public:
 	int BlinkyX, BlinkyY;
 	char PacDirection;
 	Inky(QObject *parent = nullptr);
-	void findTarget(int pX, int pY) override;    
+	void findTarget(int pX, int pY) override;   
+	void newChase() override; 
 };
 
 #endif // INKY_H

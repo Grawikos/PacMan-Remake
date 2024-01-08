@@ -5,6 +5,8 @@
 
 Pinky::Pinky(QObject *parent) : Ghost(parent){
 	loadSprite("pacman_sprites/Pinky.png");
+	homeX = 2;
+	homeY = 0;
 }
 
 void Pinky::findTarget(int pX, int pY){
@@ -27,5 +29,12 @@ void Pinky::findTarget(int pX, int pY){
 			return;
 	}
 }
+
+
+void Pinky::newChase(){
+	mode = CHASE;
+	loadSprite("pacman_sprites/Pinky.png");
+}
+
 
 

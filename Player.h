@@ -13,7 +13,7 @@ public:
     void move(int newX, int newY);
     QLabel* getLabel();
 	int x, y;
-	bool poweredUP;
+	bool isPoweredUP;
 	void jump(int toX);
 	void secondAnimation(int toX);
 	char direction; //w,s,a,d and x = stop
