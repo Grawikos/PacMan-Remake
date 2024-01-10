@@ -7,7 +7,10 @@
 #include <QTimer>
 #include <QVector>
 #include <QString>
-
+#include <QPropertyAnimation>
+#include <QDebug>
+#include <QMap>
+#include <QRandomGenerator>
 
 
 #define CHASE 0

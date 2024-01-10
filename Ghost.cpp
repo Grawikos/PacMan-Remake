@@ -1,31 +1,12 @@
 #include "Ghost.h"
-#include <QPropertyAnimation>
-#include <QDebug>
-#include <QMap>
-#include <QRandomGenerator>
-#include <QVector>
-
-#define SIZE_MODIFIER 2
-#define SPRITE_SIZE 14 * SIZE_MODIFIER
-#define PADDING 12
-#define SIZE_MODIFIER 2
-#define TILE_SIZE 8 * SIZE_MODIFIER
-#define ROWS 28
-#define COLUMNS 31
-#define PACE 180
-#define JUMPPACE PACE/2
-#define SPACE_SCORE 50
-#define WALL 1
-#define FRAMES 4
-#define X 0
-#define Y 1
+#include "defines.h"
 
 
 Ghost::Ghost(QObject *parent) : QObject(parent) {
     mode = CHASE;
     isEaten = false;
     direction = {1, 0};
-    setOffset(-SPRITE_SIZE / 2, -SPRITE_SIZE / 2);  // offset
+    setOffset(-PADDING, -PADDING);  // offset
     pace = PACE;
 	
     animTimer = new QTimer(this);
@@ -69,11 +50,11 @@ Ghost::Ghost(QObject *parent) : QObject(parent) {
 void Ghost::setPosition(int _x, int _y){
 	x = _x;
 	y = _y;
-    setPos(x * TILE_SIZE + PADDING, y * TILE_SIZE + PADDING);
+    setPos(x * TILE_SIZE, y * TILE_SIZE);
 }
 
 void Ghost::setSpritePos(float _x, float _y) {
-    setPos(_x * TILE_SIZE + PADDING, _y * TILE_SIZE + PADDING);
+    setPos(_x * TILE_SIZE, _y * TILE_SIZE);
 }
 
 

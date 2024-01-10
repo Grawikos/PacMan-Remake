@@ -1,18 +1,6 @@
 // mainwindow.cpp
 #include "mainwindow.h"
-
-
-
-#define SIZE_MODIFIER 2
-#define SPRITE_SIZE 14 * SIZE_MODIFIER
-#define TILE_SIZE 8 * SIZE_MODIFIER
-#define ROWS 28
-#define COLUMNS 31
-#define PADDING 4
-#define SPACE_SCORE 50
-#define PACE 200 //ms per tile
-#define Y 1
-#define X 0
+#include "defines.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -130,14 +118,14 @@ void MainWindow::initialiseMap(){
 			{
 				QGraphicsPixmapItem *foodItem = scene->addPixmap(food);
 				foodItem->setScale(SIZE_MODIFIER);
-				foodItem->setPos(col * TILE_SIZE - TILE_SIZE/2, row * TILE_SIZE - TILE_SIZE/2);
+				foodItem->setPos(col * TILE_SIZE - PADDING, row * TILE_SIZE - PADDING);
 				foodItemsGrid[row][col] = foodItem;
 			}
 			else if (map[row][col] == 3)
 			{
 				QGraphicsPixmapItem *bigFoodItem = scene->addPixmap(bigFood);
 				bigFoodItem->setScale(SIZE_MODIFIER);
-				bigFoodItem->setPos(col * TILE_SIZE - TILE_SIZE/2, row * TILE_SIZE - TILE_SIZE/2);
+				bigFoodItem->setPos(col * TILE_SIZE - 4, row * TILE_SIZE - 4);
 				foodItemsGrid[row][col] = bigFoodItem;
 			}
 		}
@@ -280,7 +268,7 @@ void MainWindow::death(){
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
 	if (!gameStarted) {
-		ghostMoveTimer->start(PACE); 
+		ghostMoveTimer->start(MAIN_PACE); 
 		gameStarted = true;
     }
 	int key = event->key();
@@ -292,7 +280,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 			lastKeyPressed = key;
 			if (!continuousMoveTimer->isActive()) {
 				continuousMove();
-				continuousMoveTimer->start(PACE);
+				continuousMoveTimer->start(MAIN_PACE);
 			} 
             break;
     }
@@ -304,14 +292,14 @@ void MainWindow::powerUP(){
 	for(Ghost* g : ghosts){
 		g->getFrightened();
 	}
-	ghostMoveTimer->setInterval(PACE * 1.5);
+	ghostMoveTimer->setInterval(MAIN_PACE * 1.5);
 	QTimer::singleShot(8000, this, [&](){ 	// 8s ?
 		pacman->isPoweredUP = false;
 		for(Ghost* g : ghosts){
 			if(!g->isEaten)
 				g->newChase();
 		}
-		ghostMoveTimer->setInterval(PACE);	
+		ghostMoveTimer->setInterval(MAIN_PACE);	
 	}); 
 	scoreMulitiplier = 1;
 	updateScore();

@@ -1,26 +1,22 @@
 #include "Player.h"
-
-
-#define SIZE_MODIFIER 2
-#define SPRITE_SIZE 14 * SIZE_MODIFIER
-#define PADDING 12
-#define SIZE_MODIFIER 2
-#define TILE_SIZE 8 * SIZE_MODIFIER
-#define ROWS 28
-#define COLUMNS 31
-#define PACE 180
-#define JUMPPACE PACE/2
-#define SPACE_SCORE 50
-#define FRAMES 4
+#include "defines.h"
 
 
 Player::Player(QObject *parent) : QObject(parent), QGraphicsPixmapItem() {
-    setPixmap(QPixmap("pacman_sprites/PacMan.png").scaled(SPRITE_SIZE, SPRITE_SIZE));
-    setOffset(-SPRITE_SIZE / 2, -SPRITE_SIZE / 2);  // offset
+    spriteSheet = QPixmap("pacman_sprites/Pacman_full.png");
+    currentFrame = 0;
+    
+    setPixmap(spriteSheet.copy(0, 0, RAW_SIZE, RAW_SIZE).scaled(SPRITE_SIZE, SPRITE_SIZE));
+    setOffset(-PADDING, -PADDING);  // offset
     isPoweredUP = false;
 	animTimer = new QTimer(this);
+	eatAnimTimer = new QTimer(this);
+    connect(eatAnimTimer, &QTimer::timeout, this, &Player::eatingAnimation);
+    eatAnimTimer->start(PACE/2);
 	direction.append(0);
 	direction.append(0);
+	
+	
 }
 
 void Player::setPosition(int _x, int _y) {
@@ -30,7 +26,7 @@ void Player::setPosition(int _x, int _y) {
 }
 
 void Player::setSpritePos(float _x, float _y) {
-    setPos(_x * TILE_SIZE + PADDING, _y * TILE_SIZE + PADDING);
+    setPos(_x * TILE_SIZE, _y * TILE_SIZE);
 }
 
 
@@ -66,6 +62,35 @@ void Player::jump(int toX){
         animTimer->stop();
     });   
 }
+
+void Player::eatingAnimation() {
+    int frameX = currentFrame % 3 * (RAW_SIZE + 2);
+    int tmpDir = direction[0]*2 + direction[1];
+    int frameY;
+
+    switch(tmpDir){
+		case 2:
+			frameY = 0;
+			break;
+		case -2:
+			frameY = RAW_SIZE + 2;
+			break;
+		case -1:
+			frameY = 2*RAW_SIZE + 4;
+			break;
+		case 1:
+			frameY = 3*RAW_SIZE + 6;
+			break;
+		default:
+			frameY = 0;
+	}
+    
+    
+    setPixmap(spriteSheet.copy(frameX, frameY, RAW_SIZE, RAW_SIZE).scaled(SPRITE_SIZE, SPRITE_SIZE));
+    currentFrame = (currentFrame + 1) % 3;
+
+}
+
 
 void Player::reset(){
 	setPosition(14, 23);

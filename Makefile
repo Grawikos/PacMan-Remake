@@ -160,6 +160,7 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
 		testqt2.pro Blinky.h \
 		Clyde.h \
+		defines.h \
 		Ghost.h \
 		Inky.h \
 		mainwindow.h \
@@ -355,7 +356,7 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents Blinky.h Clyde.h Ghost.h Inky.h mainwindow.h Pinky.h Player.h $(DISTDIR)/
+	$(COPY_FILE) --parents Blinky.h Clyde.h defines.h Ghost.h Inky.h mainwindow.h Pinky.h Player.h $(DISTDIR)/
 	$(COPY_FILE) --parents Blinky.cpp Clyde.cpp Ghost.cpp Inky.cpp mainwindow.cpp Pinky.cpp Player.cpp TestPacMan.cpp $(DISTDIR)/
 
 
@@ -460,7 +461,8 @@ Clyde.o: Clyde.cpp Clyde.h \
 		Ghost.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Clyde.o Clyde.cpp
 
-Ghost.o: Ghost.cpp Ghost.h
+Ghost.o: Ghost.cpp Ghost.h \
+		defines.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Ghost.o Ghost.cpp
 
 Inky.o: Inky.cpp Inky.h \
@@ -473,14 +475,16 @@ mainwindow.o: mainwindow.cpp mainwindow.h \
 		Ghost.h \
 		Pinky.h \
 		Inky.h \
-		Clyde.h
+		Clyde.h \
+		defines.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o mainwindow.cpp
 
 Pinky.o: Pinky.cpp Pinky.h \
 		Ghost.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Pinky.o Pinky.cpp
 
-Player.o: Player.cpp Player.h
+Player.o: Player.cpp Player.h \
+		defines.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Player.o Player.cpp
 
 TestPacMan.o: TestPacMan.cpp mainwindow.h \
