@@ -19,6 +19,20 @@
 #include <QLabel>
 #include <QPoint>
 #include <QVector>
+#include <QMap>
+#include <QHBoxLayout>
+#include <iostream>
+#include <QFile>
+#include <QTextStream>
+
+#include <QDebug>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QGraphicsPixmapItem>
+#include <QtMath>
+#include <QDialog>
+#include <QPushButton>
+
 
 
 class MainWindow : public QMainWindow {
@@ -36,10 +50,18 @@ protected:
 
 
 private:
+	void startScreen();
+	void endScreen();
+	int readHighScore();
+	void writeHighScore();
+	void restart();
+	QGraphicsScene* scene;
+	QVector<QVector<QGraphicsPixmapItem*>> foodItemsGrid;
 	int scoreMulitiplier;
 	QVector<Ghost*> ghosts;
 	void death();
 	void ghostMove();
+	bool checkDeathColision();
 	QLabel* highScoreLabel;
 	QLabel* scoreLabel;
 	void directionalMove();
@@ -64,7 +86,8 @@ private:
     void powerUP();
     void updateScore();
     void updateHighScore();
-    void moveLabels();
+    void initialiseMap();
+    bool gameStarted;
 };
 
 #endif // MAINWINDOW_H

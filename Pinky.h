@@ -5,12 +5,13 @@
 
 #include <QObject>
 #include <QLabel>
+#include <QVector>
 
 class Pinky : virtual public Ghost {
     Q_OBJECT
 
 public:
-	char PacDirection;
+	QVector<int> PacDirection;
 	Pinky(QObject *parent = nullptr);
 	void findTarget(int pX, int pY) override;    
 	void newChase() override;

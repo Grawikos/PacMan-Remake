@@ -4,11 +4,14 @@
 #include <QLabel>
 #include <QtMath>
 
+#define PACE 180
+
 
 Clyde::Clyde(QObject *parent) : Ghost(parent){
 	loadSprite("pacman_sprites/Clyde.png");
 	homeX = 0;
-	homeY = 33;
+	homeY = 35;
+	sprite = "pacman_sprites/Clyde.png";
 }
 
 void Clyde::findTarget(int pX, int pY){
@@ -28,4 +31,5 @@ void Clyde::findTarget(int pX, int pY){
 void Clyde::newChase(){
 	mode = CHASE;
 	loadSprite("pacman_sprites/Clyde.png");
+	pace = PACE;
 }

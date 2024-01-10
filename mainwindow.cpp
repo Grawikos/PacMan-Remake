@@ -1,8 +1,6 @@
 // mainwindow.cpp
 #include "mainwindow.h"
-#include <QHBoxLayout>
-#include <iostream>
-#include <QDebug>
+
 
 
 #define SIZE_MODIFIER 2
@@ -13,13 +11,16 @@
 #define PADDING 4
 #define SPACE_SCORE 50
 #define PACE 200 //ms per tile
+#define Y 1
+#define X 0
+
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), tileSize(TILE_SIZE) {
+    : QMainWindow(parent), gameStarted(false) {
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
 
-    setFixedSize(ROWS * TILE_SIZE, COLUMNS * TILE_SIZE + SPACE_SCORE);
+    setFixedSize(ROWS * TILE_SIZE + 30, COLUMNS * TILE_SIZE + SPACE_SCORE + 20);
     
     QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
     mainLayout->setAlignment(Qt::AlignTop);
@@ -27,47 +28,62 @@ MainWindow::MainWindow(QWidget *parent)
 
     QHBoxLayout* scoreLayout = new QHBoxLayout();
 	scoreLabel = new QLabel("Score: 0", centralWidget);
+	scoreLabel->setFixedHeight(SPACE_SCORE);
 	scoreLayout->addWidget(scoreLabel);
 	highScoreLabel = new QLabel("High Score: 0", centralWidget);
 	scoreLayout->addWidget(highScoreLabel, Qt::AlignCenter);
 
-    QHBoxLayout* centralLayout = new QHBoxLayout(centralWidget);
-    centralLayout->setAlignment(Qt::AlignCenter);
+	scene = new QGraphicsScene();
+    QGraphicsView* graphicsView = new QGraphicsView(scene, centralWidget);
+
+    QGraphicsPixmapItem* backgroundImageItem = scene->addPixmap(QPixmap("pacman_sprites/Board.png"));
+    backgroundImageItem->setScale(2);
+    backgroundImageItem->setPos(0, 0);
     
+    graphicsView->setFixedSize(ROWS * TILE_SIZE + 3, COLUMNS * TILE_SIZE + 3);
+    graphicsView->setSceneRect(0, 0, ROWS * TILE_SIZE, COLUMNS * TILE_SIZE);
+    //
     pacman = new Player(centralWidget);
-    pacman->move(14, 23);
+	scene->addItem(pacman);
+	pacman->setPosition(14, 23);
+
     blinky = new Blinky(centralWidget);
-	blinky->x = 1;
-	blinky->y = 1;
-	pinky = new Pinky(centralWidget);
-	pinky->x = 2;
-	pinky->y = 1;
-	inky = new Inky(centralWidget);
-	inky->x = 3;
-	inky->y = 1;
-	clyde = new Clyde(centralWidget);
-	clyde->x = 4;
-	clyde->y = 1;
-    centralLayout->addWidget(pacman->getLabel());
-    centralLayout->addWidget(blinky->getLabel());
-    centralLayout->addWidget(pinky->getLabel());
-    centralLayout->addWidget(inky->getLabel());
-    centralLayout->addWidget(clyde->getLabel());
+
+	scene->addItem(blinky);
     ghosts.push_back(blinky);
+/*
+	pinky = new Pinky(centralWidget);
+	inky = new Inky(centralWidget);
+	clyde = new Clyde(centralWidget);
+    
+	scene->addItem(pinky);
+	scene->addItem(inky);
+	scene->addItem(clyde);
+
 	ghosts.push_back(pinky);
 	ghosts.push_back(inky);
 	ghosts.push_back(clyde);
-	
+*/
     mainLayout->addLayout(scoreLayout);
-    mainLayout->addLayout(centralLayout); 
+    mainLayout->addWidget(graphicsView);
     
     food.load("pacman_sprites/Food_small.png");
 	bigFood.load("pacman_sprites/Food_big.png");
-	backgroundImage.load("pacman_sprites/Board.png");
-	backgroundImage = backgroundImage.scaled(ROWS * TILE_SIZE, COLUMNS * TILE_SIZE);
 	
     lastKeyPressed = Qt::Key_unknown;
-    map = { // 0 - empty 1 - wall, 2 - food, 3 - powerup
+    
+	initialiseMap();
+    continuousMoveTimer = new QTimer(this);
+    ghostMoveTimer = new QTimer(this);
+    
+	connect(ghostMoveTimer, &QTimer::timeout, this, &MainWindow::ghostMove);
+	connect(continuousMoveTimer, &QTimer::timeout, this, &MainWindow::continuousMove);
+    startScreen();
+}
+
+
+void MainWindow::initialiseMap(){
+	map = { // 0 - empty 1 - wall, 2 - food, 3 - powerup
 	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 	{1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1},
 	{1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1},
@@ -100,53 +116,179 @@ MainWindow::MainWindow(QWidget *parent)
 	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
 	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 	};
+	
+	
+	foodItemsGrid.resize(ROWS + 2);
+	for (int i = 0; i < foodItemsGrid.size(); ++i) {
+		foodItemsGrid[i].resize(COLUMNS + 2);
+	}
+	for (int row = 0; row <= ROWS + 1; ++row)
+	{
+		for (int col = 0; col < COLUMNS; ++col)
+		{
+			if (map[row][col] == 2)
+			{
+				QGraphicsPixmapItem *foodItem = scene->addPixmap(food);
+				foodItem->setScale(SIZE_MODIFIER);
+				foodItem->setPos(col * TILE_SIZE - TILE_SIZE/2, row * TILE_SIZE - TILE_SIZE/2);
+				foodItemsGrid[row][col] = foodItem;
+			}
+			else if (map[row][col] == 3)
+			{
+				QGraphicsPixmapItem *bigFoodItem = scene->addPixmap(bigFood);
+				bigFoodItem->setScale(SIZE_MODIFIER);
+				bigFoodItem->setPos(col * TILE_SIZE - TILE_SIZE/2, row * TILE_SIZE - TILE_SIZE/2);
+				foodItemsGrid[row][col] = bigFoodItem;
+			}
+		}
+	}
+}
 
-    continuousMoveTimer = new QTimer(this);
-    ghostMoveTimer = new QTimer(this);
-    ghostMoveTimer->start(PACE);
-    
-	connect(ghostMoveTimer, &QTimer::timeout, this, &MainWindow::ghostMove);
-	connect(continuousMoveTimer, &QTimer::timeout, this, &MainWindow::continuousMove);
+int MainWindow::readHighScore() {
+    int highScore = 0;
+
+    QFile file("highScore.txt");
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        in >> highScore;
+        file.close();
+    } else {
+        qDebug() << "Failed to open highScore.txt for reading";
+    }
+
+    return highScore;
+}
+
+void MainWindow::writeHighScore(){
+	QFile file("highScore.txt");
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << highScore;
+        file.close();
+    } else {
+        qDebug() << "Failed to open highScore.txt for writing";
+    }
 	
 }
 
+void MainWindow::startScreen(){
+	score = 0;
+	highScore = readHighScore();
+	updateHighScore();
+	
+    for(auto g : ghosts){
+		g->reset();
+	}
+
+}
+
+
+
 void MainWindow::ghostMove(){
-	pinky->PacDirection = pacman->direction;
+/*	pinky->PacDirection = pacman->direction;
 	inky->PacDirection = pacman->direction;
 	inky->BlinkyX = blinky->x;
 	inky->BlinkyY = blinky->y;
+*/	checkDeathColision();
 	
-	//qDebug() << blinky->direction << "\nmode: " << blinky->mode << "\n" << blinky->targetX;
 	for(Ghost* ghost : ghosts){
-		if((ghost->x == pacman->x) && (ghost->y == pacman->y)){
-			if(pacman->isPoweredUP){
-				ghost->eaten();
-				score += 20 * scoreMulitiplier;
-				scoreMulitiplier *= 2;
-			}
-			else{
-				death();
-				return;
-			}
-		}
 		ghost->findTarget(pacman->x, pacman->y);
 		ghost->nextMove();
 	}
 }
 
+void MainWindow::restart(){
+	gameStarted = false;
+	pacman->reset();
+	for(auto r : foodItemsGrid){
+		for(auto c : r){
+			if(c && c->scene() == scene)
+				c->show();
+		}
+	}
+
+	map = { // 0 - empty 1 - wall, 2 - food, 3 - powerup
+	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1},
+	{1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1},
+	{1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1},
+	{1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1},
+	{1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1},
+	{1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1},
+	{1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1},
+	{0,0,0,0,1,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,1,0,0,0,0},
+	{1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1},
+	{1,1,1,1,1,1,2,1,1,0,1,1,0,0,0,0,1,1,0,1,1,2,1,1,1,1,1,1},
+	{0,0,0,0,0,0,2,0,0,0,1,1,0,0,0,0,1,1,0,0,0,2,0,0,0,0,0,0},
+	{1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1},
+	{1,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,1},
+	{0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0},
+	{0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0},
+	{1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1},
+	{1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1},
+	{1,3,2,2,1,1,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,1,1,2,2,3,1},
+	{1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1},
+	{1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1},
+	{1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1},
+	{1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1},
+	{1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+	};
+	startScreen();
+	
+}
+
 void MainWindow::death(){
+	if(score > highScore){
+		highScore = score;
+		updateHighScore();
+	}
 	ghostMoveTimer->stop();
+	//pacman->animTimer->stop();
 	continuousMoveTimer->stop();
+	
+	QDialog gameOverDialog;
+    gameOverDialog.setWindowTitle("Game Over");
+    gameOverDialog.resize(200, 100);
+
+    QPushButton resetButton("Restart");
+    connect(&resetButton, &QPushButton::clicked, &gameOverDialog, &QDialog::accept);
+
+    QPushButton quitButton("Quit");
+    connect(&quitButton, &QPushButton::clicked, &gameOverDialog, &QDialog::reject);
+
+    QVBoxLayout layout(&gameOverDialog);
+    layout.addWidget(&resetButton);
+    layout.addWidget(&quitButton);
+
+    int result = gameOverDialog.exec();
+
+    if (result == QDialog::Accepted) {
+        restart();
+    } else if (result == QDialog::Rejected) {
+		writeHighScore();
+		qApp->quit();
+    }
 }
 
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
+	if (!gameStarted) {
+		ghostMoveTimer->start(PACE); 
+		gameStarted = true;
+    }
 	int key = event->key();
     switch (key) {
-        case Qt::Key_Up:
-        case Qt::Key_Down:
-        case Qt::Key_Left:
-        case Qt::Key_Right:
+        case Qt::Key_W:
+        case Qt::Key_S:
+        case Qt::Key_A:
+        case Qt::Key_D:
 			lastKeyPressed = key;
 			if (!continuousMoveTimer->isActive()) {
 				continuousMove();
@@ -163,38 +305,61 @@ void MainWindow::powerUP(){
 		g->getFrightened();
 	}
 	ghostMoveTimer->setInterval(PACE * 1.5);
-	QTimer::singleShot(8000, this, [&](){
+	QTimer::singleShot(8000, this, [&](){ 	// 8s ?
 		pacman->isPoweredUP = false;
 		for(Ghost* g : ghosts){
-			g->newChase();
+			if(!g->isEaten)
+				g->newChase();
 		}
-	ghostMoveTimer->setInterval(PACE);	
-	}); // 8s ?
+		ghostMoveTimer->setInterval(PACE);	
+	}); 
 	scoreMulitiplier = 1;
 	updateScore();
 }
 
+bool MainWindow::checkDeathColision(){
+	for(Ghost* ghost : ghosts){
+		if(((ghost->x == pacman->x) && (ghost->y == pacman->y)) ||
+			((pacman->x + pacman->direction[X] == ghost->x) &&
+			(pacman->y + pacman->direction[Y] == ghost->y) &&
+			(ghost->x + ghost->direction[X] == pacman->x)&&
+			(ghost->y + ghost->direction[Y] == pacman->y)))
+		{
+			if(pacman->isPoweredUP){
+					
+				if(!ghost->isEaten){	
+					score += 20 * scoreMulitiplier;	
+					ghost->eaten();
+					scoreMulitiplier *= 2;
+				}
+			}
+			else if(!ghost->isEaten){
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 void MainWindow::continuousMove() {
     int newX = pacman->x;
     int newY = pacman->y;
-    char direction = 'x';
-    //qDebug() << newX << newY;
+    QVector direction = {0, 0};
     switch (lastKeyPressed) {
-        case Qt::Key_Up:
-			direction = 'w';
+        case Qt::Key_W:
+			direction = {0, -1};
             newY--;
             break;
-        case Qt::Key_Down:
-			direction = 's';
+        case Qt::Key_S:
+			direction = {0, 1};
             newY++;
             break;
-        case Qt::Key_Left:
-			direction = 'a';
+        case Qt::Key_A:
+			direction = {-1, 0};
             newX--;
             break;
-        case Qt::Key_Right:
-			direction = 'd';
+        case Qt::Key_D:
+			direction = {1, 0};
             newX++;
             break;
     }
@@ -202,25 +367,31 @@ void MainWindow::continuousMove() {
     // Check wall
     if (newX >= 0 && newX < ROWS && newY >= 0 && newY < COLUMNS &&
 		map[newY][newX] != 1) {
+		if(checkDeathColision()){
+			death();
+			return;
+		}
 		pacman->direction = direction;
 		pacman->move(newX, newY);
 		if(map[newY][newX] == 2){
 			score++;
 			updateScore();
 			map[newY][newX] = 0;
+			foodItemsGrid[newY][newX]->hide();
 		}
 		if(map[newY][newX] == 3){
 			powerUP();
 			map[newY][newX] = 0;
+			foodItemsGrid[newY][newX]->hide();
 		}
 		
 	}
 	else if (pacman->x == 27 && pacman->y == 14 && newX == 28) {
-		pacman->direction = 'd';
+		pacman->direction = {1, 0};
 		pacman->jump(0);
 	}
 	else if (pacman->x == 0 && pacman->y == 14 && newX == -1) {
-		pacman->direction = 'a';
+		pacman->direction = {-1, 0};
 		pacman->jump(27);
 	}
 	else{
@@ -233,32 +404,26 @@ void MainWindow::continuousMove() {
 void MainWindow::directionalMove(){
 	int newX = pacman->x;
     int newY = pacman->y;
-    //qDebug() << newX << newY;
-    switch (pacman->direction) {
-        case 'w':
-            newY--;
-            break;
-        case 's':
-			newY++;
-            break;
-        case 'a':
-            newX--;
-            break;
-        case 'd':
-            newX++;
-            break;
-    }
+    newX += pacman->direction[0];
+    newY += pacman->direction[1];
+    
     if (newX >= 0 && newX < ROWS && newY >= 0 && newY < COLUMNS &&
 		map[newY][newX] != 1) {
+		if(checkDeathColision()){
+			death();
+			return;
+		}
 		pacman->move(newX, newY);
 		if(map[newY][newX] == 2){
 			score++;
 			updateScore();
 			map[newY][newX] = 0;
+			foodItemsGrid[newY][newX]->hide();
 		}
 		if(map[newY][newX] == 3){
 			powerUP();
 			map[newY][newX] = 0;
+			foodItemsGrid[newY][newX]->hide();
 		}
 	}
 	else if (pacman->x == 27 && pacman->y == 14 && newX == 28) {
@@ -268,8 +433,7 @@ void MainWindow::directionalMove(){
 		pacman->jump(27);
 	}
 	else{
-//		continuousMoveTimer->stop();
-		pacman->direction = 'x';
+		pacman->direction = {0, 0};
 	}
     
 }
@@ -277,38 +441,14 @@ void MainWindow::directionalMove(){
 void MainWindow::paintEvent(QPaintEvent *event)
 {
 	Q_UNUSED(event);
-
 	QPainter painter(this);
-	
-	painter.drawPixmap(0, SPACE_SCORE, backgroundImage);
-
-	for (int row = 0; row <= ROWS + 1; ++row)
-	{
-		for (int col = 0; col < COLUMNS; ++col)
-		{
-			if(map[row][col] == 2)
-				painter.drawPixmap(col * TILE_SIZE - PADDING, row * TILE_SIZE + SPACE_SCORE - PADDING, SPRITE_SIZE, SPRITE_SIZE, food);
-			else if(map[row][col] == 3)
-				painter.drawPixmap(col * TILE_SIZE - PADDING, row * TILE_SIZE + SPACE_SCORE - PADDING, SPRITE_SIZE, SPRITE_SIZE, bigFood);
-			
-		}
-	}
 }
 
 void MainWindow::updateScore() {
     scoreLabel->setText("Score: " + QString::number(score));
-	moveLabels();
 }
 
 void MainWindow::updateHighScore() {
     highScoreLabel->setText("High Score: " + QString::number(highScore));
-}
-
-void MainWindow::moveLabels() {
-	pacman->setPosition(pacman->x, pacman->y);
-	for(Ghost* g : ghosts){
-		qDebug() << g->x << g->y;
-		g->setPosition(g->x, g->y);
-	}
 }
 
